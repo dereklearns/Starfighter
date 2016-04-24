@@ -16,7 +16,7 @@ Uses pygame.
 ![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_realexplosions.gif)
 
 #Testing Pixel-to-Pixel Collision
-![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_testpixelcollision.gif)
+![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_testpixelcolision.gif)
 
 #Opps, Bullets don't rotate from enemy correctly
 ![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_bulletsflywrongway.gif)
