@@ -10,7 +10,7 @@ Uses pygame.
 ![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_newship.gif)
 
 #Basic Explosions
-![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_basicexplosions.gif)
+![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_basicexplosion.gif)
 
 #Real Explosions
 ![First Steps](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_realexplosions.gif)
