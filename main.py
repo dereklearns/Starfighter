@@ -14,6 +14,10 @@ RED = (255, 0, 0)
  
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 512
+def get_distance(origin, destination):
+    x = origin[0] - destination[0]
+    y = origin[1] - destination[1]
+    return math.sqrt(x*x + y*y)
 
 def get_angle(origin, destination):
     """Returns angle in radians from origin to destination.
@@ -23,7 +27,7 @@ def get_angle(origin, destination):
     """
     x_dist = destination[0] - origin[0]
     y_dist = destination[1] - origin[1]
-    print math.atan2(-y_dist, x_dist) % (2 * math.pi)
+    # print math.atan2(-y_dist, x_dist) % (2 * math.pi)
     return math.atan2(-y_dist, x_dist) % (2 * math.pi)
 
 def project(pos, angle, distance):
@@ -65,10 +69,13 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.image.load(filename).convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
+        self.speed = 1
+
 
 
     def update(self):
-        self.rect.y += 1
+        self.rect.y += self.speed
+
         if self.rect.y >= 0:
 
             self.lazer_recharge -= 1
@@ -101,6 +108,58 @@ class EnemyBullet(pygame.sprite.Sprite):
     def rotate_image(self, angle):
         self.image = pygame.transform.rotate(self.masterimage, angle)
 
+class ZigZagEnemy(Enemy):
+    health_points = 1
+    lazer_recharge = 100
+
+    def __init__(self, filename, hp):
+        pygame.sprite.Sprite.__init__(self)
+        self.health_points = hp
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.speed = 3
+        move_lista = list()
+        for x in range(6):
+            move_lista.append([random.randrange(1,600),x*30])
+            
+        print move_lista
+        # self.pathA = [[random.randrange(1,60]]
+        # self.waypoints = iter([[60,0],[60,220], [500,220],[500,380],[60,380],[60,600]])
+        self.waypoints = iter(move_lista)
+
+        self.destination = next(self.waypoints)
+
+    def reached_destination(self):
+            if self.rect.center == (self.destination[0],self.destination[1]):
+                print "reached destination"
+                return True
+            else:
+                return False
+
+    def update(self):
+        if self.reached_destination():
+            try:
+                self.destination = next(self.waypoints)
+
+            except StopIteration:
+                print "No more waypoints"
+                self.destination = (self.rect.center[0], 700)
+
+        self.distance = get_distance(self.rect.center, self.destination)
+
+        self.angle = get_angle(self.rect.center, self.destination)
+
+        self.rect.center = project(self.rect.center, self.angle, min(self.distance,self.speed))
+        
+
+
+        if self.rect.y >= 0:
+
+            self.lazer_recharge -= 1
+
+        if self.lazer_recharge < 0:
+            self.lazer_recharge += 50
 
 class Bullet(pygame.sprite.Sprite):
     a = 0
@@ -227,6 +286,8 @@ class Game(object):
         if not self.game_over:
             # Move all the sprites
             dice = random.randint(1,100)
+
+            # calls update on all classes
             self.all_sprites_list.update()
 
             if dice == 10:
@@ -235,7 +296,7 @@ class Game(object):
                 self.all_sprites_list.add(enemy)
                 self.enemy_list.add(enemy)
             elif dice == 50:
-                enemy = Enemy("Images/mine_enemy.png", 2)
+                enemy = ZigZagEnemy("Images/mine_enemy.png", 2)
                 enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
                 enemy.rect.y = -200
                 self.all_sprites_list.add(enemy)
