@@ -4,7 +4,7 @@ Uses pygame.
 -includes use of hitbox detection, sprites to create animated graphics, and a basic targeting on AI.
 
 #The Basics
-I have the user's ship spawning and moveable with arrow keys. I have also added in enenmy ships that spawn and move down the screen. Basic collision is working and when user's ship collides, Game Over.
+I have the user's ship spawning, moveable with arrow keys, and shooting with spacebar. I have also added in enenmy ships that spawn and move down the screen. Basic collision is working and when user's ship collides, Game Over.
 
 ![The Basics](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_thebasics.gif)
 
