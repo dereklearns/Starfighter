@@ -32,3 +32,10 @@ The most basic way to test for collisions is using rectangles, our ship is displ
 I implemented the ships targetting system to shoot their projectile at the user's ships current location. The bullets of the enemy need to rotate properly to face the direction they are shot in. You will notice I have a math error currently when the enemy ships shoot to the left. Game is already fun to play and ships just continue to spawn at random spots. I haven't implemented the Pixel-to-Pixel collision yet, but I do know how to implement it. 
 
 ![Almost a Real Game](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_bulletsflywrongway.gif)
+\
+#Enemies Becoming Enemies
+Until now, the ships spawned in random (x,y) and moved down the screen. Now, the basic ship moves the same boring way but I added in randomized waypoints using `Iter`. The cool ships have a designated list they iterate through when getting closer to the screen. Later on, I will of course have pre-defined patterns specific ships follow - but until then, another mechanic implemented!
+
+![Eneimies Becoming Enemies](https://raw.githubusercontent.com/dadam88/Starfighter/master/Progress_Images/starship_progress_waypoint_movement.gif)
+
+
