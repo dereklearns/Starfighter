@@ -114,6 +114,14 @@ class Ship(pygame.sprite.Sprite):
         self.speed = 1
         self.health_points = 1
         
+    def death_animation(self):
+        
+        explode = Explosion()
+
+        explode.rect.x = self.rect.x + self.rect.width*.25
+        explode.rect.y = self.rect.y + self.rect.height*.25
+
+        return explode
 
 class PlayerShip(Ship):
     """ This class represents the player. """
@@ -126,6 +134,12 @@ class PlayerShip(Ship):
         self.rect = self.image.get_rect()
         self.rect.y = SCREEN_HEIGHT - self.rect.height
         self.current_speed = 0
+
+    def shoot_bullet(self):
+        bullet = PlayerBullet("Images/red_bullet.png")
+        bullet.rect.x = self.rect.x + (self.rect.width / 2) - (bullet.rect.width /2)
+        bullet.rect.y = self.rect.y - self.rect.height/2
+        return bullet
 
     def change_speed(self, x,):
         self.current_speed += x
@@ -146,9 +160,13 @@ class EnemyBasicShip(Ship):
     lazer_recharge_cooldown = 200
     speed = 1
 
+    def shoot_bullet(self, target):
+        bullet = EnemyTargettingBullet((target.rect.center[0], target.rect.center[1] + 100), self.rect.center)
+        bullet.rect.x = self.rect.x + (self.rect.width / 2) - (bullet.rect.width /2)
+        bullet.rect.y = self.rect.y + self.rect.height/2
+        return bullet
 
-    def death_animation(self):
-        self.death_animation = Explosion()
+
 
     def make_projectile(self):
         projectile = BasicEnemyBullet("Images/enemy_bullet.png", self)
@@ -286,15 +304,16 @@ class Game(object):
                          self.__init__()
 
                     # Spawn player bullet
-                    bullet = PlayerBullet("Images/red_bullet.png")
-                    bullet.rect.x = self.player.rect.x + (self.player.rect.width / 2) - (bullet.rect.width /2)
-                    bullet.rect.y = self.player.rect.y - self.player.rect.height/2
+                    bullet = self.player.shoot_bullet()
+            
+                    # Make bullet visible by adding it into sprite lists
                     self.all_sprites_list.add(bullet)
                     self.bullet_list.add(bullet)
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     self.player.change_speed(-5)
+
                 elif event.key == pygame.K_LEFT:
                     self.player.change_speed(5)
 
@@ -318,6 +337,7 @@ class Game(object):
                 enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
                 self.all_sprites_list.add(enemy)
                 self.enemy_list.add(enemy)
+
             elif dice == 50:
                 enemy = SprinterShip("Images/mine_enemy.png")
                 enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
@@ -343,31 +363,26 @@ class Game(object):
                     #self.score += 1
             for enemy in self.enemy_list:
                 if enemy.lazer_recharge <= 0:
-                    # adding 50 to Y so bullets go offscreen
 
-
-                    bullet = EnemyTargettingBullet((self.player.rect.center[0], self.player.rect.center[1] + 100), enemy.rect.center)
-                    bullet.rect.x = enemy.rect.x + (enemy.rect.width / 2) - (bullet.rect.width /2)
-                    bullet.rect.y = enemy.rect.y + enemy.rect.height/2
+                    bullet = enemy.shoot_bullet(self.player)
+                 
                     self.all_sprites_list.add(bullet)
                     self.enemy_bullet_list.add(bullet)
 
                 if pygame.sprite.spritecollide(enemy, self.bullet_list, True):
                     enemy.health_points = enemy.health_points - 1
-                    print "HP",enemy.health_points
+                    print "HP", enemy.health_points
 
                 if enemy.health_points <= 0:
-                    print "enemy killed"
-                    enemy.death_animation()
-                    explode = Explosion()
-
-                    explode.rect.x = enemy.rect.x + enemy.rect.width*.25
-                    explode.rect.y = enemy.rect.y + enemy.rect.height*.25
+        
+                    explode = enemy.death_animation()
+                    
                     self.explosion_list.add(explode)
                     self.all_sprites_list.add(explode)
                     self.score += 1
                     self.enemy_list.remove(enemy)
                     self.all_sprites_list.remove(enemy)
+                    
                 for explosion in self.explosion_list:
                     if explosion.duration <= 0:
                         self.explosion_list.remove(explosion)
