@@ -1,7 +1,3 @@
-"""
-AI AIMS and shoots in correct ANGLE
-"""
- 
 import pygame
 import random
 import math
@@ -14,6 +10,7 @@ RED = (255, 0, 0)
  
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 512
+
 def get_distance(origin, destination):
     x = origin[0] - destination[0]
     y = origin[1] - destination[1]
@@ -59,31 +56,7 @@ class Explosion(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(self.image, (50,50))
 
 
-class Enemy(pygame.sprite.Sprite):
-    health_points = 1
-    lazer_recharge = 100
-
-    def __init__(self, filename, hp):
-        pygame.sprite.Sprite.__init__(self)
-        self.health_points = hp
-        self.image = pygame.image.load(filename).convert()
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
-        self.speed = 1
-
-
-
-    def update(self):
-        self.rect.y += self.speed
-
-        if self.rect.y >= 0:
-
-            self.lazer_recharge -= 1
-
-        if self.lazer_recharge < 0:
-            self.lazer_recharge += 100
-
-class EnemyBullet(pygame.sprite.Sprite):
+class EnemyTargettingBullet(pygame.sprite.Sprite):
     def __init__(self, destination, origin):
         pygame.sprite.Sprite.__init__(self)
         self.angle = 0
@@ -92,11 +65,11 @@ class EnemyBullet(pygame.sprite.Sprite):
         self.image = self.masterimage
 
         self.rect = self.image.get_rect()
+        self.pos = origin
         self.destination = destination
-        self.angle = get_angle(self.rect.center, self.destination)
+        self.angle = get_angle(self.pos, self.destination)
       
         self.rotate_image(math.degrees(self.angle))
-        self.pos = origin
         self.speed = 3
 
     def update(self):
@@ -108,17 +81,100 @@ class EnemyBullet(pygame.sprite.Sprite):
     def rotate_image(self, angle):
         self.image = pygame.transform.rotate(self.masterimage, angle)
 
-class ZigZagEnemy(Enemy):
-    health_points = 1
-    lazer_recharge = 100
 
-    def __init__(self, filename, hp):
+
+class Bullet(pygame.sprite.Sprite):
+    speed = 3
+    damage = 1
+    filename = "Images/enemy_bullet.png"
+    def __init__(self, filename):
         pygame.sprite.Sprite.__init__(self)
-        self.health_points = hp
         self.image = pygame.image.load(filename).convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
-        self.speed = 3
+
+class BasicEnemyBullet(Bullet):
+    # adding 50 to Y so bullets go offscreen
+
+    def update(self):
+        self.rect.y +=  1
+
+class PlayerBullet(Bullet):
+    def update(self):
+        self.rect.y -=  10
+
+class Ship(pygame.sprite.Sprite):
+    """ Generic Ship Class """
+    def __init__(self, filename):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.speed = 1
+        self.health_points = 1
+        
+
+class PlayerShip(Ship):
+    """ This class represents the player. """
+
+    def __init__(self, filename):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+        self.rect.y = SCREEN_HEIGHT - self.rect.height
+        self.current_speed = 0
+
+    def change_speed(self, x,):
+        self.current_speed += x
+
+
+    def update(self):
+        """ Update the player location. """
+        self.rect.x += self.current_speed
+        if self.rect.x < 0:
+            self.rect.x = SCREEN_WIDTH
+        if self.rect.x > SCREEN_WIDTH:
+            self.rect.x = SCREEN_WIDTH - self.rect.x
+
+class EnemyBasicShip(Ship):
+
+    health_points = 3
+    lazer_recharge = 200
+    lazer_recharge_cooldown = 200
+    speed = 1
+
+
+    def death_animation(self):
+        self.death_animation = Explosion()
+
+    def make_projectile(self):
+        projectile = BasicEnemyBullet("Images/enemy_bullet.png", self)
+        return projectile
+
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.y >= 0:
+
+            self.lazer_recharge -= 1
+
+        if self.lazer_recharge < 0:
+            self.lazer_recharge += self.lazer_recharge_cooldown
+
+class SprinterShip(EnemyBasicShip):
+    health_points = 1
+    lazer_recharge = 50
+    lazer_recharge_cooldown = 50
+    speed = 3
+
+    def __init__(self, filename):
+        pygame.sprite.Sprite.__init__(self)
+     
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
         move_lista = list()
         for x in range(6):
             move_lista.append([random.randrange(1,600),x*30])
@@ -129,6 +185,10 @@ class ZigZagEnemy(Enemy):
         self.waypoints = iter(move_lista)
 
         self.destination = next(self.waypoints)
+
+    def make_projectile(self):
+        projectile = BasicEnemyBullet("Images/enemy_bullet.png")
+        return projectile
 
     def reached_destination(self):
             if self.rect.center == (self.destination[0],self.destination[1]):
@@ -159,46 +219,7 @@ class ZigZagEnemy(Enemy):
             self.lazer_recharge -= 1
 
         if self.lazer_recharge < 0:
-            self.lazer_recharge += 50
-
-class Bullet(pygame.sprite.Sprite):
-    a = 0
-    def __init__(self, filename, a):
-        pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load(filename).convert()
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
-        self.a = a
-
-    def update(self):
-        if self.a == 0:
-            self.rect.y -= 10
-        else:
-            self.rect.y += 3
-
-class Player(pygame.sprite.Sprite):
-    """ This class represents the player. """
-    change_x = 0
-
-    def __init__(self, filename):
-        pygame.sprite.Sprite.__init__(self)
-
-        self.image = pygame.image.load(filename).convert()
-        self.image.set_colorkey(WHITE)
-        self.rect = self.image.get_rect()
-        self.rect.y = SCREEN_HEIGHT - self.rect.height
-
-    def change_speed(self, x,):
-        self.change_x += x
-
-    def update(self):
-        """ Update the player location. """
-
-        self.rect.x += self.change_x
-        if self.rect.x < 0:
-            self.rect.x = SCREEN_WIDTH
-        if self.rect.x > SCREEN_WIDTH:
-            self.rect.x = SCREEN_WIDTH - self.rect.x
+            self.lazer_recharge += self.lazer_recharge_cooldown
 
 class Game(object):
     """ This class represents an instance of the game. If we need to
@@ -240,7 +261,7 @@ class Game(object):
         self.enemy_list = pygame.sprite.Group()
  
         # Create the player
-        self.player = Player("Images/red_ship.png")
+        self.player = PlayerShip("Images/red_ship.png")
         self.all_sprites_list.add(self.player)
         self.player_list.add(self.player)
 
@@ -263,7 +284,9 @@ class Game(object):
                 if event.key == pygame.K_SPACE:
                     if self.game_over:
                          self.__init__()
-                    bullet = Bullet("Images/red_bullet.png", 0)
+
+                    # Spawn player bullet
+                    bullet = PlayerBullet("Images/red_bullet.png")
                     bullet.rect.x = self.player.rect.x + (self.player.rect.width / 2) - (bullet.rect.width /2)
                     bullet.rect.y = self.player.rect.y - self.player.rect.height/2
                     self.all_sprites_list.add(bullet)
@@ -291,12 +314,12 @@ class Game(object):
             self.all_sprites_list.update()
 
             if dice == 10:
-                enemy = Enemy("Images/spaceship_enemy.png", 1)
+                enemy = EnemyBasicShip("Images/spaceship_enemy.png")
                 enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
                 self.all_sprites_list.add(enemy)
                 self.enemy_list.add(enemy)
             elif dice == 50:
-                enemy = ZigZagEnemy("Images/mine_enemy.png", 2)
+                enemy = SprinterShip("Images/mine_enemy.png")
                 enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
                 enemy.rect.y = -200
                 self.all_sprites_list.add(enemy)
@@ -321,7 +344,9 @@ class Game(object):
             for enemy in self.enemy_list:
                 if enemy.lazer_recharge <= 0:
                     # adding 50 to Y so bullets go offscreen
-                    bullet = EnemyBullet((self.player.rect.center[0], self.player.rect.center[1] + 100), enemy.rect.center)
+
+
+                    bullet = EnemyTargettingBullet((self.player.rect.center[0], self.player.rect.center[1] + 100), enemy.rect.center)
                     bullet.rect.x = enemy.rect.x + (enemy.rect.width / 2) - (bullet.rect.width /2)
                     bullet.rect.y = enemy.rect.y + enemy.rect.height/2
                     self.all_sprites_list.add(bullet)
@@ -333,6 +358,7 @@ class Game(object):
 
                 if enemy.health_points <= 0:
                     print "enemy killed"
+                    enemy.death_animation()
                     explode = Explosion()
 
                     explode.rect.x = enemy.rect.x + enemy.rect.width*.25
