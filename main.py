@@ -69,6 +69,7 @@ class EnemyTargettingBullet(pygame.sprite.Sprite):
         self.destination = destination
         self.angle = get_angle(self.pos, self.destination)
       
+        print self.angle
         self.rotate_image(math.degrees(self.angle))
         self.speed = 3
 
@@ -93,11 +94,24 @@ class Bullet(pygame.sprite.Sprite):
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
+    def update(self):
+        self.rect.y -= self.speed
+
 class BasicEnemyBullet(Bullet):
-    # adding 50 to Y so bullets go offscreen
+    # adding 50 to Y so bullets go offscreen 
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.masterimage = pygame.image.load("Images/enemy_bullet.png").convert_alpha()
+        self.masterimage = pygame.transform.scale(self.masterimage, (25,25))
+        self.image = self.masterimage
+        self.rect = self.image.get_rect()
+        self.rotate_image(-90)
 
     def update(self):
-        self.rect.y +=  1
+        self.rect.y +=  self.speed
+
+    def rotate_image(self, angle):
+        self.image = pygame.transform.rotate(self.masterimage, angle)
 
 class PlayerBullet(Bullet):
     def update(self):
@@ -161,12 +175,10 @@ class EnemyBasicShip(Ship):
     speed = 1
 
     def shoot_bullet(self, target):
-        bullet = EnemyTargettingBullet((target.rect.center[0], target.rect.center[1] + 100), self.rect.center)
+        bullet = BasicEnemyBullet()
         bullet.rect.x = self.rect.x + (self.rect.width / 2) - (bullet.rect.width /2)
         bullet.rect.y = self.rect.y + self.rect.height/2
         return bullet
-
-
 
     def make_projectile(self):
         projectile = BasicEnemyBullet("Images/enemy_bullet.png", self)
@@ -185,7 +197,7 @@ class SprinterShip(EnemyBasicShip):
     health_points = 1
     lazer_recharge = 50
     lazer_recharge_cooldown = 50
-    speed = 3
+    speed = 2
 
     def __init__(self, filename):
         pygame.sprite.Sprite.__init__(self)
@@ -193,20 +205,26 @@ class SprinterShip(EnemyBasicShip):
         self.image = pygame.image.load(filename).convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
-        move_lista = list()
-        for x in range(6):
-            move_lista.append([random.randrange(1,600),x*30])
-            
-        print move_lista
+        # move_lista = list()
+        # for x in range(6):
+        #     move_lista.append([random.randrange(1,600),x*30])
+
+        zigzag_waypoint = list()
+        zigzag_waypoint = [[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
+                            [500,200],[400,100],[300,200],[200,100],[100,100]]
+
         # self.pathA = [[random.randrange(1,60]]
         # self.waypoints = iter([[60,0],[60,220], [500,220],[500,380],[60,380],[60,600]])
-        self.waypoints = iter(move_lista)
+        # self.waypoints = iter(move_lista)
+        self.waypoints = iter(zigzag_waypoint)
 
         self.destination = next(self.waypoints)
 
-    def make_projectile(self):
-        projectile = BasicEnemyBullet("Images/enemy_bullet.png")
-        return projectile
+    def shoot_bullet(self, target):
+        bullet = EnemyTargettingBullet((target.rect.center[0], target.rect.center[1] + 100), self.rect.center)
+        bullet.rect.x = self.rect.x + (self.rect.width / 2) - (bullet.rect.width /2)
+        bullet.rect.y = self.rect.y + self.rect.height/2
+        return bullet
 
     def reached_destination(self):
             if self.rect.center == (self.destination[0],self.destination[1]):
@@ -344,6 +362,7 @@ class Game(object):
                 enemy.rect.y = -200
                 self.all_sprites_list.add(enemy)
                 self.enemy_list.add(enemy)
+                
             if pygame.sprite.spritecollide(self.player, self.enemy_list, True):
                 self.game_over = True
 
