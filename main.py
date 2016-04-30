@@ -11,6 +11,21 @@ RED = (255, 0, 0)
 SCREEN_WIDTH = 512
 SCREEN_HEIGHT = 512
 
+def spawn_enemies(type_of_enemy, number, waypoints):
+    spawn_list = list()
+    # Hotfix for weird problem of spawning first two in same spot
+    # Have no idea how to fix properly
+    number += 1
+    #
+    for x in range(1, number):
+        enemy = SprinterShip("Images/mine_enemy.png")
+        print(enemy.rect.x, enemy.rect.y)
+        enemy.rect.x = -50 
+        enemy.rect.y = -50 * x
+        print(enemy.rect.x, enemy.rect.y)
+        spawn_list.append(enemy)
+    return spawn_list
+
 def get_distance(origin, destination):
     x = origin[0] - destination[0]
     y = origin[1] - destination[1]
@@ -195,8 +210,8 @@ class EnemyBasicShip(Ship):
 
 class SprinterShip(EnemyBasicShip):
     health_points = 1
-    lazer_recharge = 50
-    lazer_recharge_cooldown = 50
+    lazer_recharge = 250
+    lazer_recharge_cooldown = 250
     speed = 2
 
     def __init__(self, filename):
@@ -256,6 +271,14 @@ class SprinterShip(EnemyBasicShip):
 
         if self.lazer_recharge < 0:
             self.lazer_recharge += self.lazer_recharge_cooldown
+class Level(object):
+    def __init__(self):
+        self.timer = pygame.time.get_ticks()
+
+    def elasped_time(self, wait_time):
+        if pygame.time.get_ticks() - self.timer >= wait_time:
+            self.timer = pygame.time.get_ticks()
+            return True
 
 class Game(object):
     """ This class represents an instance of the game. If we need to
@@ -278,7 +301,7 @@ class Game(object):
     # Other data
     game_over = False
     score = 0
- 
+
     # --- Class methods
     # Set up the game
     def __init__(self):
@@ -302,6 +325,8 @@ class Game(object):
         self.player_list.add(self.player)
 
         dice = 0
+        self.level1 = Level()
+
 
 
     def process_events(self):
@@ -349,19 +374,25 @@ class Game(object):
 
             # calls update on all classes
             self.all_sprites_list.update()
+            
+            if self.level1.elasped_time(5000):
+                spawned = spawn_enemies(1,3,1)
+                for enemy in spawned:
+                    self.all_sprites_list.add(enemy)
+                    self.enemy_list.add(enemy)
 
-            if dice == 10:
-                enemy = EnemyBasicShip("Images/spaceship_enemy.png")
-                enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
-                self.all_sprites_list.add(enemy)
-                self.enemy_list.add(enemy)
+            # if dice == 10:
+            #     enemy = EnemyBasicShip("Images/spaceship_enemy.png")
+            #     enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
+            #     self.all_sprites_list.add(enemy)
+            #     self.enemy_list.add(enemy)
 
-            elif dice == 50:
-                enemy = SprinterShip("Images/mine_enemy.png")
-                enemy.rect.x = random.randrange(SCREEN_WIDTH-enemy.rect.width)
-                enemy.rect.y = -200
-                self.all_sprites_list.add(enemy)
-                self.enemy_list.add(enemy)
+            # elif dice == 50:
+            #     # Spawn 10 sprinters in a line
+                
+
+            #     pass
+
                 
             if pygame.sprite.spritecollide(self.player, self.enemy_list, True):
                 self.game_over = True
