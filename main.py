@@ -16,15 +16,26 @@ def spawn_enemies(type_of_enemy, number, waypoints):
     # Hotfix for weird problem of spawning first two in same spot
     # Have no idea how to fix properly
     number += 1
-    #
     for x in range(1, number):
+    # ~Hotfix
+    # ~Hotfix
         enemy = SprinterShip("Images/mine_enemy.png")
-        print(enemy.rect.x, enemy.rect.y)
         enemy.rect.x = -50 
         enemy.rect.y = -50 * x
-        print(enemy.rect.x, enemy.rect.y)
         spawn_list.append(enemy)
+
     return spawn_list
+
+
+def enter_left(type_of_enemy, number, waypoints):
+    leftpositions = [(50, 50), (50, 100), (50, 150)]
+    spawnedlist = list()
+    for x, y in leftpositions:
+        enemy = EnemyBasicShip("Images/spaceship_enemy.png")
+        enemy.rect.x = x
+        enemy.rect.y = y
+        spawnedlist.append(enemy)
+    return spawnedlist
 
 def get_distance(origin, destination):
     x = origin[0] - destination[0]
@@ -96,8 +107,6 @@ class EnemyTargettingBullet(pygame.sprite.Sprite):
 
     def rotate_image(self, angle):
         self.image = pygame.transform.rotate(self.masterimage, angle)
-
-
 
 class Bullet(pygame.sprite.Sprite):
     speed = 3
@@ -348,7 +357,7 @@ class Game(object):
 
                     # Spawn player bullet
                     bullet = self.player.shoot_bullet()
-            
+
                     # Make bullet visible by adding it into sprite lists
                     self.all_sprites_list.add(bullet)
                     self.bullet_list.add(bullet)
@@ -376,7 +385,8 @@ class Game(object):
             self.all_sprites_list.update()
             
             if self.level1.elasped_time(5000):
-                spawned = spawn_enemies(1,3,1)
+                # spawned = spawn_enemies(1,3,1)
+                spawned = enter_left(1,3,1)
                 for enemy in spawned:
                     self.all_sprites_list.add(enemy)
                     self.enemy_list.add(enemy)
