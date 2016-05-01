@@ -201,6 +201,7 @@ class EnemyBasicShip(Ship):
     lazer_recharge = 200
     lazer_recharge_cooldown = 200
     speed = 1
+
     def __init__(self, filename):
         pygame.sprite.Sprite.__init__(self)
      
@@ -208,12 +209,10 @@ class EnemyBasicShip(Ship):
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
-        zigzag_waypoint = list()
         zigzag_waypoint = [[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
                             [500,200],[400,100],[300,200],[200,100],[100,100]]
 
         self.waypoints = iter(zigzag_waypoint)
-
         self.destination = next(self.waypoints)
 
     def shoot_bullet(self, target):
@@ -223,8 +222,8 @@ class EnemyBasicShip(Ship):
         return bullet
 
     def reached_destination(self):
-            if self.rect.center == (self.destination[0],self.destination[1]):
-                return True
+        if self.rect.center == (self.destination[0],self.destination[1]):
+            return True
          
     def move_to_next_waypoint(self):
         self.distance = get_distance(self.rect.center, self.destination)
@@ -256,6 +255,7 @@ class SprinterShip(EnemyBasicShip):
     lazer_recharge = 250
     lazer_recharge_cooldown = 250
     speed = 2
+    ready_to_shoot = False
 
     def __init__(self, filename):
         pygame.sprite.Sprite.__init__(self)
@@ -269,13 +269,17 @@ class SprinterShip(EnemyBasicShip):
                             [500,200],[400,100],[300,200],[200,100],[100,100]]
 
         self.waypoints = iter(zigzag_waypoint)
-
         self.destination = next(self.waypoints)
 
     def shoot_bullet(self, target):
         bullet = EnemyTargettingBullet((target.rect.center[0], target.rect.center[1] + 100), self.rect.center)
         bullet.rect.x = self.rect.x + (self.rect.width / 2) - (bullet.rect.width /2)
         bullet.rect.y = self.rect.y + self.rect.height/2
+
+        # reset cooldown and flag
+        self.lazer_recharge += self.lazer_recharge_cooldown
+        self.ready_to_shoot = False
+
         return bullet
 
     def reached_destination(self):
@@ -285,6 +289,9 @@ class SprinterShip(EnemyBasicShip):
         self.distance = get_distance(self.rect.center, self.destination)
         self.angle = get_angle(self.rect.center, self.destination)
         self.rect.center = project(self.rect.center, self.angle, min(self.distance,self.speed))
+
+    def reload_complete(self):
+        return self.lazer_recharge <= 0
 
     def update(self):
         if self.reached_destination():
@@ -297,12 +304,11 @@ class SprinterShip(EnemyBasicShip):
 
         self.move_to_next_waypoint()
 
-        if self.rect.y >= 0:
-
+        if self.reload_complete():
+            self.ready_to_shoot = True
+        else:
             self.lazer_recharge -= 1
 
-        if self.lazer_recharge < 0:
-            self.lazer_recharge += self.lazer_recharge_cooldown
 class Level(object):
     def __init__(self):
         self.timer = pygame.time.get_ticks()
@@ -407,7 +413,7 @@ class Game(object):
             # calls update on all classes
             self.all_sprites_list.update()
             
-            if self.level1.elasped_time(5000):
+            if self.level1.elasped_time(2000):
                 spawned = spawn_enemies(1,3,1)
                 # spawned = enter_left(1,3,1)
                 for enemy in spawned:
@@ -445,12 +451,14 @@ class Game(object):
                     #self.all_sprites_list.remove(bullet)
                     #self.score += 1
             for enemy in self.enemy_list:
-                if enemy.lazer_recharge <= 0:
+                if enemy.ready_to_shoot:
 
                     bullet = enemy.shoot_bullet(self.player)
                  
                     self.all_sprites_list.add(bullet)
                     self.enemy_bullet_list.add(bullet)
+                else:
+                    print "reloading"
 
                 if pygame.sprite.spritecollide(enemy, self.bullet_list, True):
                     enemy.health_points = enemy.health_points - 1

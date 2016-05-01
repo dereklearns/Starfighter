@@ -1,9 +1,6 @@
 Ship
-	Health
-	Damage
-	Speed
-	Image|Filename
-	---------
 	Move
-	Fire Projectile 
-	Ignite Death Animation | Explosion
+		Waypoints
+
+	Shoot
+		
