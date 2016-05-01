@@ -20,6 +20,7 @@ def spawn_enemies(type_of_enemy, number, waypoints):
     # ~Hotfix
     # ~Hotfix
         enemy = SprinterShip("Images/mine_enemy.png")
+        # enemy = EnemyBasicShip("Images/mine_enemy.png")
         enemy.rect.x = -50 
         enemy.rect.y = -50 * x
         spawn_list.append(enemy)
@@ -28,13 +29,16 @@ def spawn_enemies(type_of_enemy, number, waypoints):
 
 
 def enter_left(type_of_enemy, number, waypoints):
-    leftpositions = [(50, 50), (50, 100), (50, 150)]
+    leftpositions = [[50, 50], [50, 100], [50, 150]]
     spawnedlist = list()
     for x, y in leftpositions:
+        print x,y
         enemy = EnemyBasicShip("Images/spaceship_enemy.png")
-        enemy.rect.x = x
-        enemy.rect.y = y
+        # enemy.waypoints = iter([[x,y],[100,100]])
+        # enemy.destination = next(enemy.waypoints)
+        # print enemy.destination
         spawnedlist.append(enemy)
+
     return spawnedlist
 
 def get_distance(origin, destination):
@@ -197,6 +201,20 @@ class EnemyBasicShip(Ship):
     lazer_recharge = 200
     lazer_recharge_cooldown = 200
     speed = 1
+    def __init__(self, filename):
+        pygame.sprite.Sprite.__init__(self)
+     
+        self.image = pygame.image.load(filename).convert()
+        self.image.set_colorkey(WHITE)
+        self.rect = self.image.get_rect()
+
+        zigzag_waypoint = list()
+        zigzag_waypoint = [[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
+                            [500,200],[400,100],[300,200],[200,100],[100,100]]
+
+        self.waypoints = iter(zigzag_waypoint)
+
+        self.destination = next(self.waypoints)
 
     def shoot_bullet(self, target):
         bullet = BasicEnemyBullet()
@@ -204,14 +222,30 @@ class EnemyBasicShip(Ship):
         bullet.rect.y = self.rect.y + self.rect.height/2
         return bullet
 
-    def make_projectile(self):
-        projectile = BasicEnemyBullet("Images/enemy_bullet.png", self)
-        return projectile
+    def reached_destination(self):
+            if self.rect.center == (self.destination[0],self.destination[1]):
+                return True
+         
+    def move_to_next_waypoint(self):
+        self.distance = get_distance(self.rect.center, self.destination)
+        self.angle = get_angle(self.rect.center, self.destination)
+        self.rect.center = project(self.rect.center, self.angle, min(self.distance,self.speed))
 
     def update(self):
-        self.rect.y += self.speed
-        if self.rect.y >= 0:
+        # self.rect.y += self.speed
+        if self.reached_destination():
+            try:
+                print "Trying to go"
+                self.destination = next(self.waypoints)
 
+            except StopIteration:
+                print "No more waypoints"
+                self.destination = (self.rect.center[0], 700)
+        
+
+        self.move_to_next_waypoint()
+
+        if self.rect.y >= 0:
             self.lazer_recharge -= 1
 
         if self.lazer_recharge < 0:
@@ -229,17 +263,11 @@ class SprinterShip(EnemyBasicShip):
         self.image = pygame.image.load(filename).convert()
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
-        # move_lista = list()
-        # for x in range(6):
-        #     move_lista.append([random.randrange(1,600),x*30])
 
         zigzag_waypoint = list()
         zigzag_waypoint = [[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
                             [500,200],[400,100],[300,200],[200,100],[100,100]]
 
-        # self.pathA = [[random.randrange(1,60]]
-        # self.waypoints = iter([[60,0],[60,220], [500,220],[500,380],[60,380],[60,600]])
-        # self.waypoints = iter(move_lista)
         self.waypoints = iter(zigzag_waypoint)
 
         self.destination = next(self.waypoints)
@@ -251,11 +279,12 @@ class SprinterShip(EnemyBasicShip):
         return bullet
 
     def reached_destination(self):
-            if self.rect.center == (self.destination[0],self.destination[1]):
-                print "reached destination"
-                return True
-            else:
-                return False
+            return self.rect.center == (self.destination[0],self.destination[1])
+         
+    def move_to_next_waypoint(self):
+        self.distance = get_distance(self.rect.center, self.destination)
+        self.angle = get_angle(self.rect.center, self.destination)
+        self.rect.center = project(self.rect.center, self.angle, min(self.distance,self.speed))
 
     def update(self):
         if self.reached_destination():
@@ -266,13 +295,7 @@ class SprinterShip(EnemyBasicShip):
                 print "No more waypoints"
                 self.destination = (self.rect.center[0], 700)
 
-        self.distance = get_distance(self.rect.center, self.destination)
-
-        self.angle = get_angle(self.rect.center, self.destination)
-
-        self.rect.center = project(self.rect.center, self.angle, min(self.distance,self.speed))
-        
-
+        self.move_to_next_waypoint()
 
         if self.rect.y >= 0:
 
@@ -385,8 +408,8 @@ class Game(object):
             self.all_sprites_list.update()
             
             if self.level1.elasped_time(5000):
-                # spawned = spawn_enemies(1,3,1)
-                spawned = enter_left(1,3,1)
+                spawned = spawn_enemies(1,3,1)
+                # spawned = enter_left(1,3,1)
                 for enemy in spawned:
                     self.all_sprites_list.add(enemy)
                     self.enemy_list.add(enemy)
