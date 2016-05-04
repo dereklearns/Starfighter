@@ -264,11 +264,11 @@ class SprinterShip(EnemyBasicShip):
         self.image.set_colorkey(WHITE)
         self.rect = self.image.get_rect()
 
-        zigzag_waypoint = list()
-        zigzag_waypoint = [[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
-                            [500,200],[400,100],[300,200],[200,100],[100,100]]
+      
+        self.waypoints = iter([[0,0],[100,100],[200,0],[300,100],[400,0],[500,100],
+                            [500,200],[400,100],[300,200],[200,100],[100,100]])
 
-        self.waypoints = iter(zigzag_waypoint)
+        # self.waypoints = iter(zigzag_waypoints)
         self.destination = next(self.waypoints)
 
     def shoot_bullet(self, target):
